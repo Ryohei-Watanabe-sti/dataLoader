@@ -1,4 +1,5 @@
 {
-    "csv1" : "sample1.csv",
-    "csv2" : "sample2.csv"
+    "csv1"  : "sample1.csv",
+    "csv2" : "sample2.csv",
+    "dsn" : "test:12345678@tcp(127.0.0.1:3306)/oh_test?character_set_database=utf8mb4&parseTime=True&loc=Local" 
 }
