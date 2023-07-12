@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"log"
 	"os"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -17,10 +19,11 @@ type Config struct {
 }
 
 type Table1 struct {
-	gorm.Model
-	ID      int `json:"id"`
-	Name_ja int `json:"name_ja"`
-	Name_en int `json:"name_en"`
+	ID        uint `gorm:"primaryKey"`
+	Name_ja   string
+	Name_en   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func loadConfig() (*Config, error) {
@@ -67,7 +70,7 @@ func getCSV() ([][]string, [][]string) {
 	return records1, records2
 }
 
-func createTable() {
+func createTable(tName string, columns1 []string, columns2 []string) {
 	cfg, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -77,19 +80,24 @@ func createTable() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	createTableQuery := `create table if not exists 
-	table1(
+
+	createTableQuery := `create table if not exists ` + tName + ` (
 		id int,
 		name_ja varchar(10),
 		name_en varchar(10)
-	)
-	CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; `
+	); `
 	db.Exec(createTableQuery)
 }
 
+func readOption() string {
+	var text = flag.String("t", "tablename", "help message for t")
+	flag.Parse()
+	return *text
+}
+
 func main() {
-	// csv1, csv2 := getCSV()
-	// fmt.Println(csv1)
-	// fmt.Println(csv2)
-	createTable()
+	csv1, csv2 := getCSV()
+	var tableName = readOption()
+	createTable(tableName, csv1[0], csv2[0])
+
 }
