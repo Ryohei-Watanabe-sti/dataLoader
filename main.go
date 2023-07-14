@@ -81,12 +81,15 @@ func createTable(tName string, columns1 []string, columns2 []string) {
 		panic("failed to connect database")
 	}
 
-	createTableQuery := `create table if not exists ` + tName + ` (
-		id int,
-		name_ja varchar(10),
-		name_en varchar(10)
-	); `
+	if db.Migrator().HasTable(tName) == true {
+		panic("failed to create " + tName)
+	}
+
+	createTableQuery := `create table ` + tName + ` (id int); `
 	db.Exec(createTableQuery)
+
+	db.Migrator().AddColumn(tName, "Name")
+
 }
 
 func readOption() string {
