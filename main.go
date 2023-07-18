@@ -6,7 +6,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -16,14 +15,6 @@ type Config struct {
 	Csv1 string `json:"csv1"`
 	Csv2 string `json:"csv2"`
 	Dsn  string `json:"dsn"`
-}
-
-type Table1 struct {
-	ID        uint `gorm:"primaryKey"`
-	Name_ja   string
-	Name_en   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
 }
 
 func loadConfig() (*Config, error) {
@@ -88,7 +79,18 @@ func createTable(tName string, columns1 []string, columns2 []string) {
 	createTableQuery := `create table ` + tName + ` (id int); `
 	db.Exec(createTableQuery)
 
-	db.Migrator().AddColumn(tName, "Name")
+	var addColumnQuery string
+	var cName string
+	for i := 0; i < len(columns1); i++ {
+		cName = columns1[i]
+		addColumnQuery = `alter table ` + tName + ` add column csv1_` + cName + ` varchar(255);`
+		db.Exec(addColumnQuery)
+	}
+	for i := 0; i < len(columns2); i++ {
+		cName = columns2[i]
+		addColumnQuery = `alter table ` + tName + ` add column csv2_` + cName + ` varchar(255);`
+		db.Exec(addColumnQuery)
+	}
 
 }
 
@@ -102,5 +104,4 @@ func main() {
 	csv1, csv2 := getCSV()
 	var tableName = readOption()
 	createTable(tableName, csv1[0], csv2[0])
-
 }
