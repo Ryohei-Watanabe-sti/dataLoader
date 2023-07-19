@@ -117,7 +117,7 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 		insertQuery = insertQuery[:len(insertQuery)-2]
 		insertQuery += ");"
 		db.Exec(insertQuery)
-		//進捗を表示
+		//ここで進捗を表示
 	}
 
 }
