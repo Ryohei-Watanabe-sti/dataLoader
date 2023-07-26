@@ -4,7 +4,9 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"flag"
+	"io"
 	"log"
+	"math"
 	"os"
 	"strconv"
 
@@ -19,9 +21,28 @@ type Config struct {
 }
 
 func readOption() string {
-	var text = flag.String("t", "tablename", "help message for t")
+	text1 := flag.String("t", "tablename", "help message for t")
+	text2 := flag.String("tablename", "tablename", "help message for tablename")
 	flag.Parse()
-	return *text
+	var text string
+	if *text1 == "" && *text2 == "" {
+		panic("Enter the table name using \"-t\" or \"-tablename\".")
+	} else if *text1 != "" && *text2 != "" {
+		panic("Enter the table name one time.")
+	} else if *text1 != "" {
+		text = *text1
+	} else if *text2 != "" {
+		text = *text2
+	}
+
+	return text
+}
+
+func loggingSettings(filename string) {
+	logfile, _ := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	multiLogFile := io.MultiWriter(os.Stdout, logfile)
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+	log.SetOutput(multiLogFile)
 }
 
 func loadConfig() (*Config, error) {
@@ -65,6 +86,8 @@ func getCSV() ([][]string, [][]string) {
 		log.Fatal(err)
 	}
 
+	log.Println(cnf.Csv1 + " and " + cnf.Csv2 + "was read successfull.")
+
 	return records1, records2
 }
 
@@ -79,6 +102,8 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 		panic("failed to connect database")
 	}
 
+	log.Println(tName + " created successfull in dataLoader.")
+
 	if db.Migrator().HasTable(tName) == true {
 		panic("failed to create " + tName + ", already exists.")
 	}
@@ -89,6 +114,7 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 
 	createTableQuery := `create table ` + tName + ` (id int); `
 	db.Exec(createTableQuery)
+	log.Println(tName + " created successfully in dataLoader.")
 
 	var addColumnQuery string
 	var cName string
@@ -106,6 +132,9 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 	var insertArr []string
 	var insertQuery string
 	var iString string
+	all := float64(len(columns1) - 1)
+	var done float64
+	var done_ratio float64
 	for i := 1; i < len(columns1); i++ {
 		insertArr = append(columns1[i], columns2[i]...)
 		iString = strconv.Itoa(i)
@@ -117,12 +146,19 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 		insertQuery = insertQuery[:len(insertQuery)-2]
 		insertQuery += ");"
 		db.Exec(insertQuery)
-		//ここで進捗を表示
+		//進捗を表示
+		done = float64(i)
+		done_ratio = math.Floor(done / all * 100)
+		log.Printf("%g% done\n", done_ratio)
 	}
 
 }
 
 func main() {
+
+	loggingSettings("dataLoader.log")
+	log.Println("dataLoader start.")
+
 	csv1, csv2 := getCSV()
 	var tableName = readOption()
 	createTable(tableName, csv1, csv2)
