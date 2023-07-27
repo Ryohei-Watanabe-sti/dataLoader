@@ -20,11 +20,12 @@ type Config struct {
 	Dsn  string `json:"dsn"`
 }
 
-func readOption() string {
-	text1 := flag.String("t", "tablename", "help message for t")
-	text2 := flag.String("tablename", "tablename", "help message for tablename")
+func readOption() string { //
+	text1 := flag.String("t", "", "help message for t")
+	text2 := flag.String("tablename", "", "help message for tablename")
 	flag.Parse()
 	var text string
+
 	if *text1 == "" && *text2 == "" {
 		panic("Enter the table name using \"-t\" or \"-tablename\".")
 	} else if *text1 != "" && *text2 != "" {
@@ -86,7 +87,7 @@ func getCSV() ([][]string, [][]string) {
 		log.Fatal(err)
 	}
 
-	log.Println(cnf.Csv1 + " and " + cnf.Csv2 + "was read successfull.")
+	log.Println(cnf.Csv1 + " and " + cnf.Csv2 + " was read successfully")
 
 	return records1, records2
 }
@@ -102,7 +103,7 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 		panic("failed to connect database")
 	}
 
-	log.Println(tName + " created successfull in dataLoader.")
+	log.Println("successed to connext in dataLoader")
 
 	if db.Migrator().HasTable(tName) == true {
 		panic("failed to create " + tName + ", already exists.")
@@ -114,7 +115,7 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 
 	createTableQuery := `create table ` + tName + ` (id int); `
 	db.Exec(createTableQuery)
-	log.Println(tName + " created successfully in dataLoader.")
+	log.Println("successed to create table \"" + tName + "\" in dataLoader")
 
 	var addColumnQuery string
 	var cName string
@@ -128,6 +129,8 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 		addColumnQuery = `alter table ` + tName + ` add column csv2_` + cName + ` varchar(255);`
 		db.Exec(addColumnQuery)
 	}
+
+	log.Println("start to insert records")
 
 	var insertArr []string
 	var insertQuery string
@@ -149,15 +152,16 @@ func createTable(tName string, columns1 [][]string, columns2 [][]string) {
 		//進捗を表示
 		done = float64(i)
 		done_ratio = math.Floor(done / all * 100)
-		log.Printf("%g% done\n", done_ratio)
+		log.Printf("%g%% done\n", done_ratio)
 	}
+	log.Println("end to insert records successfully")
 
 }
 
 func main() {
 
 	loggingSettings("dataLoader.log")
-	log.Println("dataLoader start.")
+	log.Println("dataLoader start")
 
 	csv1, csv2 := getCSV()
 	var tableName = readOption()
