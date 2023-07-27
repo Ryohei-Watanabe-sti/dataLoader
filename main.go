@@ -14,21 +14,23 @@ import (
 	"gorm.io/gorm"
 )
 
-type Config struct {
+type Config struct { //config.jsonを構造体に格納
 	Csv1 string `json:"csv1"`
 	Csv2 string `json:"csv2"`
 	Dsn  string `json:"dsn"`
 }
 
-func readOption() string { //
+func readOption() string { //実行オプション"-t","-tablename"のあとに続くテーブル名を返す
 	text1 := flag.String("t", "", "help message for t")
 	text2 := flag.String("tablename", "", "help message for tablename")
 	flag.Parse()
 	var text string
 
 	if *text1 == "" && *text2 == "" {
+		//実行オプションが読まれないと、テーブル名を入力するように求める
 		panic("Enter the table name using \"-t\" or \"-tablename\".")
 	} else if *text1 != "" && *text2 != "" {
+		//"-t","-tablename"の両方が入力されると、一回だけ入力するように求める
 		panic("Enter the table name one time.")
 	} else if *text1 != "" {
 		text = *text1
@@ -39,14 +41,14 @@ func readOption() string { //
 	return text
 }
 
-func loggingSettings(filename string) {
-	logfile, _ := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	multiLogFile := io.MultiWriter(os.Stdout, logfile)
-	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+func loggingSettings(filename string) { //ログファイルの出力設定
+	logfile, _ := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666) //filenameが存在しなければ作成し、666の権限を持つ
+	multiLogFile := io.MultiWriter(os.Stdout, logfile)                           //ログ出力はコマンドラインとログファイルの両方に行われる
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)                          //日時、実行ファイルを記述する
 	log.SetOutput(multiLogFile)
 }
 
-func loadConfig() (*Config, error) {
+func loadConfig() (*Config, error) { //config.jsonファイルのロード
 	f, err := os.Open("config.json")
 	if err != nil {
 		log.Fatal("loadConfig os.Open err:", err)
@@ -59,7 +61,7 @@ func loadConfig() (*Config, error) {
 	return &cfg, err
 }
 
-func getCSV() ([][]string, [][]string) {
+func getCSV() ([][]string, [][]string) { //指定された2つのcsvファイルをそれぞれ2次元配列に格納
 	cnf, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -92,7 +94,7 @@ func getCSV() ([][]string, [][]string) {
 	return records1, records2
 }
 
-func createTable(tName string, columns1 [][]string, columns2 [][]string) {
+func createTable(tName string, columns1 [][]string, columns2 [][]string) { //テーブルを作成し、2次元配列を挿入
 	cfg, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
